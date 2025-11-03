@@ -1,0 +1,744 @@
+local plyrs = game:GetService("Players")
+local plyr  = plyrs.LocalPlayer
+local chtr  = plyr.Character or plyr.CharacterAdded:Wait()
+local hrp   = chtr:WaitForChild("HumanoidRootPart")
+
+local uis        = game:GetService("UserInputService")
+local rs         = game:GetService("RunService")
+local ts         = game:GetService("TweenService")
+local reps       = game:GetService("ReplicatedStorage")
+local gui        = Instance.new("ScreenGui", plyr:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
+
+-- Main Frame
+local frame            = Instance.new("Frame", gui)
+frame.Size             = UDim2.new(0, 385, 0, 315)
+frame.Position         = UDim2.new(0.5, -150, 0.5, -80)
+frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+
+-- Drag Bar & Logic
+local topBar = Instance.new("Frame", frame)
+topBar.Size = UDim2.new(1, 0, 0, 30)
+topBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+
+local dragging, dragStart, startPos = false, nil, nil
+
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
+end)
+
+topBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+uis.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        frame.Position = startPos + UDim2.new(0, delta.X, 0, delta.Y)
+    end
+end)
+
+-- Minimize Button
+local minimize = Instance.new("TextButton", topBar)
+minimize.Size = UDim2.new(0, 30, 1, 0)
+minimize.Position = UDim2.new(1, -60, 0, 0)
+minimize.Text = "-"
+minimize.TextColor3 = Color3.new(1, 1, 1)
+minimize.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+minimize.Font = Enum.Font.SourceSansBold
+minimize.TextScaled = true
+
+-- Close Button
+local close = Instance.new("TextButton", topBar)
+close.Size = UDim2.new(0, 30, 1, 0)
+close.Position = UDim2.new(1, -30, 0, 0)
+close.Text = "X"
+close.TextColor3 = Color3.new(1, 0.4, 0.4)
+close.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+close.Font = Enum.Font.SourceSansBold
+close.TextScaled = true
+
+-- Title Label
+local title                  = Instance.new("TextLabel", topBar)
+title.Size                   = UDim2.new(1, 0, 0, 25)
+title.Position               = UDim2.new(-0.1, 0, 0, 5)
+title.Text                   = "Cave Diving Experience Menu by Juju"
+title.TextColor3             = Color3.new(1, 1, 1)
+title.BackgroundTransparency = 1
+title.Font                   = Enum.Font.SourceSansBold
+title.TextScaled             = true
+
+-- Minimize Logic
+minimize.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    for _, child in pairs(frame:GetChildren()) do
+        if child ~= topBar then
+            child.Visible = not minimized
+        end
+    end
+    frame.BackgroundTransparency = minimized and 1 or 0
+end)
+
+
+-- Close Logic
+close.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
+
+-- Ores
+local coal      = workspace.Ores.Coal
+local copper    = workspace.Ores.Copper
+local iron      = workspace.Ores.Iron
+local gold      = workspace.Ores.Gold
+local emerald   = workspace.Ores.Emerald
+local diamond   = workspace.Ores.Diamond
+local obsidian  = workspace.Ores.Obsidian
+local titanium  = workspace.Ores.Titanium
+local cancelAll = false
+
+-- Ore Teleport Buttons & Logic
+local coalTp                  = Instance.new("TextButton", frame)
+coalTp.Size                   = UDim2.new(0, 120, 0, 30)
+coalTp.Position               = UDim2.new(0, 1, 0, 35)
+coalTp.Text                   = "Mine Coal"
+coalTp.TextColor3             = Color3.new(1, 1, 1)
+coalTp.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
+coalTp.BackgroundTransparency = 0
+coalTp.Font                   = Enum.Font.SourceSansBold
+coalTp.TextScaled             = true
+
+local copperTp                  = Instance.new("TextButton", frame)
+copperTp.Size                   = UDim2.new(0, 120, 0, 30)
+copperTp.Position               = UDim2.new(0, 1, 0, 70)
+copperTp.Text                   = "Mine Copper"
+copperTp.TextColor3             = Color3.new(1, 1, 1)
+copperTp.BackgroundColor3       = Color3.fromRGB(200, 100, 0)
+copperTp.BackgroundTransparency = 0
+copperTp.Font                   = Enum.Font.SourceSansBold
+copperTp.TextScaled             = true
+
+local ironTp                  = Instance.new("TextButton", frame)
+ironTp.Size                   = UDim2.new(0, 120, 0, 30)
+ironTp.Position               = UDim2.new(0, 1, 0, 105)
+ironTp.Text                   = "Mine Iron"
+ironTp.TextColor3             = Color3.new(0, 0, 0)
+ironTp.BackgroundColor3       = Color3.fromRGB(200, 200, 200)
+ironTp.BackgroundTransparency = 0
+ironTp.Font                   = Enum.Font.SourceSansBold
+ironTp.TextScaled             = true
+
+local goldTp                  = Instance.new("TextButton", frame)
+goldTp.Size                   = UDim2.new(0, 120, 0, 30)
+goldTp.Position               = UDim2.new(0, 1, 0, 140)
+goldTp.Text                   = "Mine Gold"
+goldTp.TextColor3             = Color3.new(0, 0, 0)
+goldTp.BackgroundColor3       = Color3.fromRGB(255, 255, 0)
+goldTp.BackgroundTransparency = 0
+goldTp.Font                   = Enum.Font.SourceSansBold
+goldTp.TextScaled             = true
+
+local emeraldTp                  = Instance.new("TextButton", frame)
+emeraldTp.Size                   = UDim2.new(0, 120, 0, 30)
+emeraldTp.Position               = UDim2.new(0, 1, 0, 175)
+emeraldTp.Text                   = "Mine Emerald"
+emeraldTp.TextColor3             = Color3.new(1, 1, 1)
+emeraldTp.BackgroundColor3       = Color3.fromRGB(0, 200, 0)
+emeraldTp.BackgroundTransparency = 0
+emeraldTp.Font                   = Enum.Font.SourceSansBold
+emeraldTp.TextScaled             = true
+
+local diamondTp                  = Instance.new("TextButton", frame)
+diamondTp.Size                   = UDim2.new(0, 120, 0, 30)
+diamondTp.Position               = UDim2.new(0, 1, 0, 210)
+diamondTp.Text                   = "Mine Diamond"
+diamondTp.TextColor3             = Color3.new(1, 1, 1)
+diamondTp.BackgroundColor3       = Color3.fromRGB(0, 0, 200)
+diamondTp.BackgroundTransparency = 0
+diamondTp.Font                   = Enum.Font.SourceSansBold
+diamondTp.TextScaled             = true
+
+local obsidianTp                  = Instance.new("TextButton", frame)
+obsidianTp.Size                   = UDim2.new(0, 120, 0, 30)
+obsidianTp.Position               = UDim2.new(0, 1, 0, 245)
+obsidianTp.Text                   = "Mine Obsidian"
+obsidianTp.TextColor3             = Color3.new(1, 1, 1)
+obsidianTp.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
+obsidianTp.BackgroundTransparency = 0
+obsidianTp.Font                   = Enum.Font.SourceSansBold
+obsidianTp.TextScaled             = true
+
+local titaniumTp                  = Instance.new("TextButton", frame)
+titaniumTp.Size                   = UDim2.new(0, 120, 0, 30)
+titaniumTp.Position               = UDim2.new(0, 1, 0, 280)
+titaniumTp.Text                   = "Mine Titanium"
+titaniumTp.TextColor3             = Color3.new(0, 0, 0)
+titaniumTp.BackgroundColor3       = Color3.fromRGB(235, 235, 235)
+titaniumTp.BackgroundTransparency = 0
+titaniumTp.Font                   = Enum.Font.SourceSansBold
+titaniumTp.TextScaled             = true
+
+-- Tween Logic
+local function tweenToOre(part, goalPosition, speed)
+    local currentPosition = part.Position
+    local distance = (goalPosition - currentPosition).Magnitude
+    local duration = distance / speed
+
+    local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local goal = {CFrame = CFrame.new(goalPosition)}
+    local tween = ts:Create(part, tweenInfo, goal)
+    tween:Play()
+
+    -- Monitor for cancel condition
+    local connection
+    connection = rs.Heartbeat:Connect(function()
+        if cancelAll then
+            tween:Cancel()
+            if connection then
+                connection:Disconnect()
+            end
+            stopSwim()
+        end
+    end)
+
+    -- Still wait for tween to finish or cancel
+    tween.Completed:Wait()
+    if connection then connection:Disconnect() end
+end
+
+-- Swim Logic
+local swimming  = false
+local gravReset = nil
+local swimbeat  = nil
+
+function startSwim()
+    local plyrs = game:GetService("Players")
+    local plyr  = plyrs.LocalPlayer
+    if not swimming and plyr and plyr.Character and plyr.Character:FindFirstChildWhichIsA("Humanoid") then
+        workspace.Gravity = 0
+        local swimDied    = function()
+            workspace.Gravity = 196.2
+            swimming = false
+        end
+        local Humanoid = plyr.Character:FindFirstChildWhichIsA("Humanoid")
+        gravReset = Humanoid.Died:Connect(swimDied)
+        local enums = Enum.HumanoidStateType:GetEnumItems()
+        table.remove(enums, table.find(enums, Enum.HumanoidStateType.None))
+        for i, v in pairs(enums) do
+            Humanoid:SetStateEnabled(v, false)
+        end
+        Humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+        swimbeat = rs.Heartbeat:Connect(function()
+            pcall(function()
+                plyr.Character.HumanoidRootPart.Velocity = ((Humanoid.MoveDirection ~= Vector3.new() or uis:IsKeyDown(Enum.KeyCode.Space)) and plyr.Character.HumanoidRootPart.Velocity or Vector3.new())
+            end)
+        end)
+        swimming = true
+    end
+end
+
+function stopSwim()
+    local plyrs = game:GetService("Players")
+    local plyr  = plyrs.LocalPlayer
+    if plyr and plyr.Character and plyr.Character:FindFirstChildWhichIsA("Humanoid") then
+        workspace.Gravity = 196.2
+        swimming          = false
+        if gravReset then
+            gravReset:Disconnect()
+        end
+        if swimbeat ~= nil then
+            swimbeat:Disconnect()
+            swimbeat = nil
+        end
+        local Humanoid = plyr.Character:FindFirstChildWhichIsA("Humanoid")
+        local enums = Enum.HumanoidStateType:GetEnumItems()
+        table.remove(enums, table.find(enums, Enum.HumanoidStateType.None))
+        for i, v in pairs(enums) do
+            Humanoid:SetStateEnabled(v, true)
+        end
+    end
+end
+
+function toggleSwim()
+    if swimming then
+        stopSwim()
+    else
+        startSwim()
+    end
+end
+
+local autoMineEnabled = false
+
+function mineOre(mineOreName)
+    local function mineOneOre(oreName)
+        local plyrs    = game:GetService("Players")
+        local plyr     = plyrs.LocalPlayer
+        local chtr     = plyr.Character or plyr.CharacterAdded:Wait()
+        if not chtr then return end
+        local rootPart = chtr:WaitForChild("HumanoidRootPart")
+        local foundOre = nil
+        local shortestDistance = math.huge
+
+        -- Loop through all of ore in workspace.Ores
+        for _, ore in pairs(workspace.Ores:GetChildren()) do
+            if ore.Name == oreName and ore:FindFirstChild("HB") and ore:FindFirstChild("Health") then
+                if ore.Health.Value > 0 then
+                    local dist = (ore.HB.Position - rootPart.Position).Magnitude
+                    if dist < shortestDistance then
+                        shortestDistance = dist
+                        foundOre = ore
+                    end
+                end
+            end
+        end
+
+        -- Teleport to the first valid ore
+        if foundOre then
+            cancelAll   = false
+            local tpPos = foundOre.HB.Position
+            startSwim()
+            tweenToOre(rootPart, tpPos, 28)
+            stopSwim()
+            local attempts = 0
+            while foundOre.Health.Value > 0 and not cancelAll do
+                attempts += 1
+                if attempts >= 100 then
+                    break
+                end
+                reps:WaitForChild("Remotes"):WaitForChild("UsePickaxe"):InvokeServer(unpack({CFrame.new(tpPos)}))
+                reps:WaitForChild("Remotes"):WaitForChild("UsePickaxe"):InvokeServer(unpack({CFrame.new(tpPos)}))
+                reps:WaitForChild("Remotes"):WaitForChild("UsePickaxe"):InvokeServer(unpack({CFrame.new(tpPos)}))
+                reps:WaitForChild("Remotes"):WaitForChild("UsePickaxe"):InvokeServer(unpack({CFrame.new(tpPos)}))
+                task.wait(0.05)
+            end
+        else
+            warn("None of ore is available")
+            task.wait(2)
+        end
+    end
+    
+    if autoMineEnabled then
+        while autoMineEnabled do
+            mineOneOre(mineOreName)
+            task.wait(0.5)
+        end
+    else
+        mineOneOre(mineOreName)
+    end
+end
+
+coalTp.MouseButton1Click:Connect(function()
+    mineOre("Coal")
+end)
+
+copperTp.MouseButton1Click:Connect(function()
+    mineOre("Copper")
+end)
+
+ironTp.MouseButton1Click:Connect(function()
+    mineOre("Iron")
+end)
+
+goldTp.MouseButton1Click:Connect(function()
+    mineOre("Gold")
+end)
+
+emeraldTp.MouseButton1Click:Connect(function()
+    mineOre("Emerald")
+end)
+
+diamondTp.MouseButton1Click:Connect(function()
+    mineOre("Diamond")
+end)
+
+obsidianTp.MouseButton1Click:Connect(function()
+    mineOre("Obsidian")
+end)
+
+titaniumTp.MouseButton1Click:Connect(function()
+    mineOre("Titanium")
+end)
+
+-- Teleport to Spawn Button & Logic
+local spawnTp                  = Instance.new("TextButton", frame)
+spawnTp.Size                   = UDim2.new(0, 120, 0, 30)
+spawnTp.Position               = UDim2.new(0, 130, 0, 35)
+spawnTp.Text                   = "Teleport to Spawn"
+spawnTp.TextColor3             = Color3.new(0, 0, 0)
+spawnTp.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
+spawnTp.BackgroundTransparency = 0
+spawnTp.Font                   = Enum.Font.SourceSansBold
+spawnTp.TextScaled             = true
+
+spawnTp.MouseButton1Click:Connect(function()
+    local plyrs = game:GetService("Players")
+    local plyr  = plyrs.LocalPlayer
+    local chtr  = plyr.Character or plyr.CharacterAdded:Wait()
+    local hrp   = chtr:WaitForChild("HumanoidRootPart")
+    local targetCFrame = CFrame.new(workspace.Map.SpawnLocation.Position)
+
+    -- Apply teleport
+    hrp.CFrame = targetCFrame
+    
+    cancelAll = true
+    stopSwim()
+end)
+
+-- Teleport to Merchant Button & Logic
+local merchantTp                  = Instance.new("TextButton", frame)
+merchantTp.Size                   = UDim2.new(0, 120, 0, 30)
+merchantTp.Position               = UDim2.new(0, 130, 0, 70)
+merchantTp.Text                   = "Teleport to Merchant"
+merchantTp.TextColor3             = Color3.new(0, 0, 0)
+merchantTp.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
+merchantTp.BackgroundTransparency = 0
+merchantTp.Font                   = Enum.Font.SourceSansBold
+merchantTp.TextScaled             = true
+
+merchantTp.MouseButton1Click:Connect(function()
+    local plyrs = game:GetService("Players")
+    local plyr  = plyrs.LocalPlayer
+    local chtr  = plyr.Character or plyr.CharacterAdded:Wait()
+    local hrp   = chtr:WaitForChild("HumanoidRootPart")
+    local targetCFrame = CFrame.new(workspace.Lobby.Shop.Ring.Position)
+
+    -- Apply teleport
+    hrp.CFrame = targetCFrame
+    
+    cancelAll = true
+    stopSwim()
+end)
+
+-- Teleport to Furnace Button & Logic
+local furnaceTp                  = Instance.new("TextButton", frame)
+furnaceTp.Size                   = UDim2.new(0, 120, 0, 30)
+furnaceTp.Position               = UDim2.new(0, 130, 0, 105)
+furnaceTp.Text                   = "Teleport to Furnace"
+furnaceTp.TextColor3             = Color3.new(0, 0, 0)
+furnaceTp.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
+furnaceTp.BackgroundTransparency = 0
+furnaceTp.Font                   = Enum.Font.SourceSansBold
+furnaceTp.TextScaled             = true
+
+furnaceTp.MouseButton1Click:Connect(function()
+    local plyrs = game:GetService("Players")
+    local plyr  = plyrs.LocalPlayer
+    local chtr  = plyr.Character or plyr.CharacterAdded:Wait()
+    local hrp   = chtr:WaitForChild("HumanoidRootPart")
+    local targetCFrame = CFrame.new(workspace.Lobby.Furnace.Ring.Position)
+
+    -- Apply teleport
+    hrp.CFrame = targetCFrame
+    
+    cancelAll = true
+    stopSwim()
+end)
+
+-- Teleport to Blacksmith Button & Logic
+local blacksmithTp                  = Instance.new("TextButton", frame)
+blacksmithTp.Size                   = UDim2.new(0, 120, 0, 30)
+blacksmithTp.Position               = UDim2.new(0, 130, 0, 140)
+blacksmithTp.Text                   = "Teleport to Blacksmith"
+blacksmithTp.TextColor3             = Color3.new(0, 0, 0)
+blacksmithTp.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
+blacksmithTp.BackgroundTransparency = 0
+blacksmithTp.Font                   = Enum.Font.SourceSansBold
+blacksmithTp.TextScaled             = true
+
+blacksmithTp.MouseButton1Click:Connect(function()
+    local plyrs = game:GetService("Players")
+    local plyr  = plyrs.LocalPlayer
+    local chtr  = plyr.Character or plyr.CharacterAdded:Wait()
+    local hrp   = chtr:WaitForChild("HumanoidRootPart")
+    local targetCFrame = CFrame.new(workspace.Lobby.Blacksmith.Ring.Position)
+
+    -- Apply teleport
+    hrp.CFrame = targetCFrame
+    
+    cancelAll = true
+    stopSwim()
+end)
+
+-- Sell All Button & Logic
+local sellAll                  = Instance.new("TextButton", frame)
+sellAll.Size                   = UDim2.new(0, 120, 0, 30)
+sellAll.Position               = UDim2.new(0, 130, 0, 175)
+sellAll.Text                   = "Sell All"
+sellAll.TextColor3             = Color3.new(0, 0, 0)
+sellAll.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
+sellAll.BackgroundTransparency = 0
+sellAll.Font                   = Enum.Font.SourceSansBold
+sellAll.TextScaled             = true
+
+sellAll.MouseButton1Click:Connect(function()
+    local plyrs = game:GetService("Players")
+    local plyr  = plyrs.LocalPlayer
+    local chtr  = plyr.Character or plyr.CharacterAdded:Wait()
+    local hrp   = chtr:WaitForChild("HumanoidRootPart")
+    local sellRing       = workspace:WaitForChild("Lobby"):WaitForChild("Shop"):WaitForChild("Ring")
+    local originalCFrame = CFrame.new(180.510101, 1453.99109, -423.26886, -5.60283661e-05, -0.187057137, 0.982349038, 1, -5.60283661e-05, 4.6312809e-05, 4.6312809e-05, 0.982349038, 0.187057137)
+    sellRing.CFrame      = hrp.CFrame
+    task.wait(0.25)
+    sellRing.CFrame      = hrp.CFrame
+    reps:WaitForChild("Remotes"):WaitForChild("MerchantEvent"):FireServer(unpack({"sellall"}))
+    task.wait(0.1)
+    sellRing.CFrame = originalCFrame
+end)
+
+-- Load All Ores Button & Logic
+local loadOres                  = Instance.new("TextButton", frame)
+loadOres.Size                   = UDim2.new(0, 120, 0, 30)
+loadOres.Position               = UDim2.new(0, 130, 0, 210)
+loadOres.Text                   = "Load All Ores"
+loadOres.TextColor3             = Color3.new(0, 0, 0)
+loadOres.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
+loadOres.BackgroundTransparency = 0
+loadOres.Font                   = Enum.Font.SourceSansBold
+loadOres.TextScaled             = true
+
+loadOres.MouseButton1Click:Connect(function()
+    local plyrs = game:GetService("Players")
+    local plyr  = plyrs.LocalPlayer
+    local chtr  = plyr.Character or plyr.CharacterAdded:Wait()
+    local hrp   = chtr:WaitForChild("HumanoidRootPart")
+    local originalCFrame = hrp.CFrame
+    
+    local teleportPositions = {
+        Vector3.new(376.386353, 1199.27051, -456.640656),
+        Vector3.new(250.277298, 1281.98511, -251.93428),
+        Vector3.new(-285.722595, 1081.29053, -265.10849),
+        Vector3.new(135.463562, 318.585876, -2005.62842),
+        Vector3.new(130.545364, 1187.12964, -237.771591),
+        Vector3.new(-10.7173929, 1360.35132, -356.866058),
+        Vector3.new(16.7992783, 452.262238, -776.66626),
+        Vector3.new(-168.5, 935.137268, -222.732422),
+    }
+
+    for _, pos in ipairs(teleportPositions) do
+        hrp.CFrame = CFrame.new(pos)
+        task.wait(0.5)
+    end
+    
+    hrp.CFrame = originalCFrame
+end)
+
+-- Remove Lava Button & Logic
+local removeLava                  = Instance.new("TextButton", frame)
+removeLava.Size                   = UDim2.new(0, 120, 0, 30)
+removeLava.Position               = UDim2.new(0, 130, 0, 245)
+removeLava.Text                   = "Remove Lava"
+removeLava.TextColor3             = Color3.new(0, 0, 0)
+removeLava.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
+removeLava.BackgroundTransparency = 0
+removeLava.Font                   = Enum.Font.SourceSansBold
+removeLava.TextScaled             = true
+
+removeLava.MouseButton1Click:Connect(function()
+    for _, lava in pairs(workspace:GetDescendants()) do
+        if lava.Name ~= "Lava" and lava.Parent ~= Map then
+            continue
+        end
+        lava:Destroy()
+    end
+end)
+
+-- Remove Acid Button & Logic
+local removeAcid                  = Instance.new("TextButton", frame)
+removeAcid.Size                   = UDim2.new(0, 120, 0, 30)
+removeAcid.Position               = UDim2.new(0, 130, 0, 280)
+removeAcid.Text                   = "Remove Acid"
+removeAcid.TextColor3             = Color3.new(0, 0, 0)
+removeAcid.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
+removeAcid.BackgroundTransparency = 0
+removeAcid.Font                   = Enum.Font.SourceSansBold
+removeAcid.TextScaled             = true
+
+removeAcid.MouseButton1Click:Connect(function()
+    for _, acid in pairs(workspace:GetDescendants()) do
+        if acid.Name ~= "Acid" and acid.Parent ~= Map then
+            continue
+        end
+        acid:Destroy()
+    end
+end)
+
+-- Auto Sell Button & Logic
+local autoSell                  = Instance.new("TextButton", frame)
+autoSell.Size                   = UDim2.new(0, 120, 0, 30)
+autoSell.Position               = UDim2.new(0, 259, 0, 35)
+autoSell.Text                   = "Auto Sell"
+autoSell.TextColor3             = Color3.new(0, 0, 0)
+autoSell.BackgroundColor3       = Color3.fromRGB(200, 0, 0)
+autoSell.BackgroundTransparency = 0
+autoSell.Font                   = Enum.Font.SourceSansBold
+autoSell.TextScaled             = true
+
+local function checkInventory()
+    local sellRing       = workspace:WaitForChild("Lobby"):WaitForChild("Shop"):WaitForChild("Ring")
+    local originalCFrame = CFrame.new(180.510101, 1453.99109, -423.26886, -5.60283661e-05, -0.187057137, 0.982349038, 1, -5.60283661e-05, 4.6312809e-05, 4.6312809e-05, 0.982349038, 0.187057137)
+    local inventory      = plyr:FindFirstChild("Inventory")
+    local inventorySpace = plyr:FindFirstChild("InventorySpace")
+
+    if inventory and inventorySpace and inventorySpace:IsA("NumberValue") then
+        local currentItems = #inventory:GetChildren()
+        if currentItems >= inventorySpace.Value then
+            local plyrs = game:GetService("Players")
+            local plyr  = plyrs.LocalPlayer
+            local chtr  = plyr.Character or plyr.CharacterAdded:Wait()
+            local hrp   = chtr:WaitForChild("HumanoidRootPart")
+            sellRing.CFrame      = hrp.CFrame
+            task.wait(0.25)
+            sellRing.CFrame      = hrp.CFrame
+            reps:WaitForChild("Remotes"):WaitForChild("MerchantEvent"):FireServer(unpack({"sellall"}))
+            task.wait(0.1)
+            sellRing.CFrame = originalCFrame
+        end
+    end
+end
+
+autoSell.MouseButton1Click:Connect(function()
+    autoSellEnabled           = not autoSellEnabled
+    autoSell.BackgroundColor3 = autoSellEnabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+
+    if autoSellEnabled then
+        autoSellConnection = task.spawn(function()
+            while autoSellEnabled do
+                checkInventory()
+                task.wait(1)
+            end
+        end)
+    else
+        if autoSellConnection then
+            autoSellConnection = nil
+        end
+    end
+end)
+
+-- Auto Mine Button & Logic
+local autoMine                  = Instance.new("TextButton", frame)
+autoMine.Size                   = UDim2.new(0, 120, 0, 30)
+autoMine.Position               = UDim2.new(0, 259, 0, 70)
+autoMine.Text                   = "Auto Mine"
+autoMine.TextColor3             = Color3.new(0, 0, 0)
+autoMine.BackgroundColor3       = Color3.fromRGB(200, 0, 0)
+autoMine.BackgroundTransparency = 0
+autoMine.Font                   = Enum.Font.SourceSansBold
+autoMine.TextScaled             = true
+
+autoMine.MouseButton1Click:Connect(function()
+    autoMineEnabled           = not autoMineEnabled
+    autoMine.BackgroundColor3 = autoMineEnabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+end)
+
+-- Furnace Interaction Buttons & Logic
+
+local furnaceFill                  = Instance.new("TextButton", frame)
+furnaceFill.Size                   = UDim2.new(0, 120, 0, 30)
+furnaceFill.Position               = UDim2.new(0, 259, 0, 105)
+furnaceFill.Text                   = "Fill Furnace"
+furnaceFill.TextColor3             = Color3.new(0, 0, 0)
+furnaceFill.BackgroundColor3       = Color3.fromRGB(150, 150, 150)
+furnaceFill.BackgroundTransparency = 0
+furnaceFill.Font                   = Enum.Font.SourceSansBold
+furnaceFill.TextScaled             = true
+
+furnaceFill.MouseButton1Click:Connect(function()
+    furnaceInteract("fill")
+end)
+
+local furnaceEmpty                  = Instance.new("TextButton", frame)
+furnaceEmpty.Size                   = UDim2.new(0, 120, 0, 30)
+furnaceEmpty.Position               = UDim2.new(0, 259, 0, 140)
+furnaceEmpty.Text                   = "Empty Furnace"
+furnaceEmpty.TextColor3             = Color3.new(0, 0, 0)
+furnaceEmpty.BackgroundColor3       = Color3.fromRGB(150, 150, 150)
+furnaceEmpty.BackgroundTransparency = 0
+furnaceEmpty.Font                   = Enum.Font.SourceSansBold
+furnaceEmpty.TextScaled             = true
+
+furnaceEmpty.MouseButton1Click:Connect(function()
+    furnaceInteract("empty")
+end)
+
+local furnaceSmelted                  = Instance.new("TextButton", frame)
+furnaceSmelted.Size                   = UDim2.new(0, 120, 0, 30)
+furnaceSmelted.Position               = UDim2.new(0, 259, 0, 175)
+furnaceSmelted.Text                   = "Empty Smelted"
+furnaceSmelted.TextColor3             = Color3.new(0, 0, 0)
+furnaceSmelted.BackgroundColor3       = Color3.fromRGB(150, 150, 150)
+furnaceSmelted.BackgroundTransparency = 0
+furnaceSmelted.Font                   = Enum.Font.SourceSansBold
+furnaceSmelted.TextScaled             = true
+
+furnaceSmelted.MouseButton1Click:Connect(function()
+    furnaceInteract("smelted")
+end)
+
+function fillFurnace()
+    for _, child in pairs(game.Players.LocalPlayer.Inventory:GetChildren()) do
+        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("FurnaceEvent"):FireServer(unpack({"AddInput", child.Name}))
+    end
+end
+
+function emptyFurnace()
+    for _, child in pairs(game.Players.LocalPlayer.FurnaceInput:GetChildren()) do
+        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("FurnaceEvent"):FireServer(unpack({"TakeInput", child.Name}))
+    end
+end
+
+function emptySmelted()
+    for _, child in pairs(game.Players.LocalPlayer.FurnaceOutput:GetChildren()) do
+        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("FurnaceEvent"):FireServer(unpack({"TakeOutput", child.Name}))
+    end
+end
+
+function furnaceInteract(action)
+    local plyrs          = game:GetService("Players")
+    local plyr           = plyrs.LocalPlayer
+    local chtr           = plyr.Character or plyr.CharacterAdded:Wait()
+    local hrp            = chtr:WaitForChild("HumanoidRootPart")
+    local furnaceRing    = workspace:WaitForChild("Lobby"):WaitForChild("Furnace"):WaitForChild("Ring")
+    local originalCFrame = CFrame.new(194.868103, 1454.40857, -395.215332, 2.27689743e-05, -0.898814559, 0.438329101, 1, 2.27689743e-05, -5.2601099e-06, -5.2601099e-06, 0.438329101, 0.898814559)
+    furnaceRing.CFrame   = hrp.CFrame
+    task.wait(0.25)
+    furnaceRing.CFrame   = hrp.CFrame
+    if action == "fill" then fillFurnace() end
+    if action == "empty" then emptyFurnace() end
+    if action == "smelted" then emptySmelted() end
+    task.wait(0.1)
+    furnaceRing.CFrame = originalCFrame
+end
+
+-- Blacksmith Add Button & Logic
+
+local blacksmithAdd                  = Instance.new("TextButton", frame)
+blacksmithAdd.Size                   = UDim2.new(0, 120, 0, 30)
+blacksmithAdd.Position               = UDim2.new(0, 259, 0, 210)
+blacksmithAdd.Text                   = "Add Blacksmith"
+blacksmithAdd.TextColor3             = Color3.new(0, 0, 0)
+blacksmithAdd.BackgroundColor3       = Color3.fromRGB(195, 195, 195)
+blacksmithAdd.BackgroundTransparency = 0
+blacksmithAdd.Font                   = Enum.Font.SourceSansBold
+blacksmithAdd.TextScaled             = true
+
+blacksmithAdd.MouseButton1Click:Connect(function()
+    local plyrs           = game:GetService("Players")
+    local plyr            = plyrs.LocalPlayer
+    local chtr            = plyr.Character or plyr.CharacterAdded:Wait()
+    local hrp             = chtr:WaitForChild("HumanoidRootPart")
+    local blacksmithRing  = workspace:WaitForChild("Lobby"):WaitForChild("Blacksmith"):WaitForChild("Ring")
+    local originalCFrame  = CFrame.new(171.470917, 1454.31104, -396.009857, -2.67028809e-05, 0.890980005, 0.454042435, 1, 2.67028809e-05, 6.42240047e-06, -6.42240047e-06, 0.454042435, -0.890980005)
+    blacksmithRing.CFrame = hrp.CFrame
+    task.wait(0.25)
+    blacksmithRing.CFrame   = hrp.CFrame
+    for _, child in pairs(game.Players.LocalPlayer.Inventory:GetChildren()) do
+        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BlacksmithEvent"):FireServer(unpack({"Add", child.Name}))
+    end
+    task.wait(0.1)
+    blacksmithRing.CFrame = originalCFrame
+end)
